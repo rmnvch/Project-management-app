@@ -1,6 +1,6 @@
 /* eslint-disable no-param-reassign */
 import { createSlice } from '@reduxjs/toolkit';
-import { InitialStateModalsModel, ModalNameModel } from './interfaces';
+import { InitialStateModalsModel } from './interfaces';
 
 const initialState: InitialStateModalsModel = {
 	deleteTask: '',

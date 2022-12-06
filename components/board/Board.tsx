@@ -1,5 +1,5 @@
 import {
-	FC, ReactElement, useEffect, useState,
+	FC, ReactElement, SyntheticEvent, useEffect,
 } from 'react';
 import { useRouter } from 'next/router';
 import { Button, Breadcrumbs, Typography } from '@mui/material';
@@ -14,12 +14,13 @@ import {
 	createColumn, getBoardColumns, updateColumn,
 } from '../../redux/slices/columnSlice';
 import ModalWindow from '../modal/ModalWindow';
-import { ModalWindowStateModel } from '../modal/interfaces';
 import NewColumnForm from '../newColumnForm/NewColumnForm';
 import { ColumnModel } from '../../redux/slices/columnSlice/interfaces';
 import {
 	deleteWhileMoving, getTasksInBoard, pushWhileMoving, updateTask,
 } from '../../redux/slices/tasksSlice';
+import { closeModals, openModal } from '../../redux/slices/modalsSlice';
+import { ModalNameModel } from '../../redux/slices/modalsSlice/interfaces';
 
 
 const Board: FC<BoardPropsModel> = (): ReactElement => {
@@ -27,7 +28,7 @@ const Board: FC<BoardPropsModel> = (): ReactElement => {
 		navBoards, navHome, addColumnBtn, createColumnHeader,
 	} = useAppSelector((state) => state.lang.text);
 
-	const [isModalOpened, setIsModalOpened] = useState<ModalWindowStateModel>(false);
+	const createModalState = useAppSelector((state) => state.modals.createColumn);
 
 	const router = useRouter();
 	const { boardid } = router.query;
@@ -47,16 +48,21 @@ const Board: FC<BoardPropsModel> = (): ReactElement => {
 		}
 	}, [boardid, dispatch]);
 
-	const handleModal = (value: boolean = !isModalOpened) => {
-		setIsModalOpened(value);
+	const handleOpenModal = (event: SyntheticEvent, name: ModalNameModel) => {
+		event.stopPropagation();
+		dispatch(openModal({ name, id: boardid }));
 	};
-	// const handleSubmit = (formData: BoardModel) => {
+
+	const handleCloseModals = () => {
+		dispatch(closeModals());
+	};
+
 	const handleSubmit = (formData: ColumnModel) => {
 		if (formData) {
 			const order = columns.length;
 			dispatch(createColumn({ boardId: boardid as string, formData, order }))
 				.then(() => {
-					handleModal(false);
+					handleCloseModals();
 				});
 		}
 	};
@@ -179,7 +185,7 @@ const Board: FC<BoardPropsModel> = (): ReactElement => {
 							color='secondary'
 							aria-label="add-new"
 							size="small"
-							onClick={() => { handleModal(); }}
+							onClick={(event) => { handleOpenModal(event, 'createColumn'); }}
 						>
 							<AddIcon fontSize='small' color='secondary' /> {addColumnBtn}
 						</Button>
@@ -209,7 +215,7 @@ const Board: FC<BoardPropsModel> = (): ReactElement => {
 								</FlexBox>
 							)}
 						</Droppable>
-						<Button color='info' onClick={() => { handleModal(); }}>
+						<Button color='info' onClick={(event) => { handleOpenModal(event, 'createColumn'); }}>
 							<FlexBox alignItems='center' justifyContent='center' gap='0'>
 								<AddIcon fontSize='small' />
 								{addColumnBtn}
@@ -220,10 +226,10 @@ const Board: FC<BoardPropsModel> = (): ReactElement => {
 			</DragDropContext>
 			<ModalWindow
 				title={createColumnHeader}
-				isOpened={isModalOpened}
+				isOpened={createModalState === boardid}
 				// closeFunc={() => { handleModal(); }}
 			>
-				<NewColumnForm onSubmit={handleSubmit} onClose={handleModal} />
+				<NewColumnForm onSubmit={handleSubmit} onClose={handleCloseModals} />
 			</ModalWindow>
 		</>
 	);
